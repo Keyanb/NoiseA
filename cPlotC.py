@@ -53,7 +53,7 @@ class CplotB(object):
         
         
         
-    def loadM(self):
+    def loadR(self):
         fc = lambda s: complex(s.replace('+-', '-'))
         for i in range (self.xs[0]):
             self.CMat[i]=loadtxt(self.filename.format(self.x[i]),converters={0:fc, 1:fc}, dtype=complex)
@@ -69,11 +69,13 @@ class CplotB(object):
         self.Ip = I*1e9
         self.Ip[0:199] = -self.Ip[0:199]
         
-        if self.s == 1:
-            Mat=(f,I,S)
+        self.Mat=(f,I,S)
+        
+        if self.s == 1:            
             save('CMatN{:02.0f}'.format(self.n),Mat)
             
-       
+    def loadM(self):
+        self.Mat=load(filename)
         
     def plotM(self):
         fig = figure(figsize = [16,9])
@@ -99,4 +101,37 @@ class CplotB(object):
         plt.clf()
         plt.close()
         del CS1 , ax1 , self.fp , self.Ip , self.Sp , self.l
+        
+        
+    def Stat(self):
+        """ compute the noise power spectrum"""
+        
+        for i in range (x[0]): 
+           
+            X = np.delete(self.Mat[2][i],np.where(abs(f)<11000))
+            fX = np.delete(self.Mat[0],np.where(abs(f)<11000))
+    
+            X = np.delete(X,np.where(abs(fX)>62000))
+            fX = np.delete(fX,np.where(abs(fX)>62000))
+    
+            X = np.delete(X,np.where((abs(fX)>14300) & (abs(fX)<20600)))
+            fX = np.delete(fX,np.where((abs(fX)>14300) & (abs(fX)<20600)))
+    
+            X = np.delete(X,np.where((abs(fX)>20810) & (abs(fX)<20890)))
+            fX = np.delete(fX,np.where((abs(fX)>20810) & (abs(fX)<20890)))
+    
+            X = np.delete(X,np.where((abs(fX)>36700) & (abs(fX)<37300)))
+            fX = np.delete(fX,np.where((abs(fX)>36700) & (abs(fX)<37300)))
+    
+            X = np.delete(X,np.where((abs(fX)>39200) & (abs(fX)<40600)))
+            fX = np.delete(fX,np.where((abs(fX)>39200) & (abs(fX)<40600)))
+    
+            X = np.delete(X,np.where((abs(fX)>42200) & (abs(fX)<43500)))
+            fX = np.delete(fX,np.where((abs(fX)>42200) & (abs(fX)<43500)))
+
+            M2n[i] = np.sum(abs(X))
+            SX[i] = shape(X)[0]
+            
+        MatN = (self.Mat[1], SX, M2n)
+        return MatN
 
