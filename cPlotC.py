@@ -17,21 +17,7 @@ sys.path.append('c:/codes/pyHegel')
 from pyHegel.util import readfile
 
 
-class CplotV(object):
-     """n numero du sweep
-        mv nombre de points en V 
-        s = 1 for save"""
-    def __init__(self, filename, n,mv, fi, fm, s):
-        self.filename = filename
-        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
-        self.n = n        
-        self.fi = fi
-        self.fm = fm
-        self.nc = 2**17
-        self.s = s     
-        self.x = np.arange(n*self.mv,(n+1)*self.mv)
-        self.xs = shape(self.x)
-        self.CMat = np.zeros((self.xs[0],self.nc,2), dtype=complex)
+
         
         
 class CplotB(object):
@@ -56,6 +42,7 @@ class CplotB(object):
         
     def loadR(self):
         fc = lambda s: complex(s.replace('+-', '-'))
+        VB = readfile(self.filename)
         for i in range (self.xs[0]):
             self.CMat[i]=loadtxt(self.fdname.format(self.x[i]),converters={0:fc, 1:fc}, dtype=complex)
 #            CBHP1-NoiseVDCB-V119-40db-I9-1M-BaseT_20170206-182343_d3_{:04.0f}.txt
@@ -135,4 +122,22 @@ class CplotB(object):
             
         MatN = (self.Mat[1], SX, M2n)
         return MatN
+        
+        
+class CplotV(CplotB):        
+    def __init__(self, filename, n, mv, fi, fm, s):
+        """n numero du sweep
+        mv nombre de points en V 
+        s = 1 for save"""
+        self.filename = filename
+        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
+        self.n = n        
+        self.fi = fi
+        self.fm = fm
+        self.mv = mv
+        self.nc = 2**17
+        self.s = s     
+        self.x = np.arange(n*self.mv,(n+1)*self.mv)
+        self.xs = shape(self.x)
+        self.CMat = np.zeros((self.xs[0],self.nc,2), dtype=complex)
 
