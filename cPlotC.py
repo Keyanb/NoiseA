@@ -128,9 +128,9 @@ class Cplot(object):
     def Stat(self):
         """ compute the noise power spectrum"""
         
-        for i in range (shape(self.Mat[2])[0]): 
+        for i in range (shape(self.Mat[4])[0]): 
            
-            X = np.delete(self.Mat[2][i],np.where(abs(f)<11000))
+            X = np.delete(self.Mat[4][i],np.where(abs(f)<11000))
             fX = np.delete(self.Mat[0],np.where(abs(f)<11000))
     
             X = np.delete(X,np.where(abs(fX)>62000))
