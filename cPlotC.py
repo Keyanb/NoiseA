@@ -91,7 +91,7 @@ class Cplot(object):
         self.Ip = I*1e9
         self.Ip[0:199] = -self.Ip[0:199]
         
-        self.Mat=(f, B, V, I, S)
+        self.Mat=(f, self.B, self.V, I, S)
         
         if self.s == 1:            
             save('CMatN{:02.0f}'.format(self.n),self.Mat)
