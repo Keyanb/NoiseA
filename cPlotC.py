@@ -10,8 +10,10 @@ from pylab import *
 from scipy import *
 from scipy.signal import *
 from numpy import *
+import re
 from scipy import constants as k
 import matplotlib.cm as cmaps
+import time
 import sys
 sys.path.append('c:/codes/pyHegel')
 from pyHegel.util import readfile
@@ -20,31 +22,63 @@ from pyHegel.util import readfile
 
         
         
-class CplotB(object):
-    def __init__(self, filename, n, mb, mv, fi, fm, s):
+class Cplot(object):
+    def __init__(self, filename, n, vb, fi, fm, s):
         """n numero du sweep
         mb nombre de points en B
         mv nombre de points en V 
         s = 1 for save"""
         self.filename = filename
+        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
         self.fi = fi
         self.fm = fm
         self.nc = 2**17
-        self.s = s    
-        self.mb = mb
-        self.mv = mv
-        self.x =  np.arange(n,self.mb*self.mb,self.mv)
-        self.xs = shape(self.x)
-        self.CMat = np.zeros((self.xs[0],self.nc,2), dtype=complex)  
+        self.s = s  
+        self.vb = vb
+        self.V=0
+        self.B=0
         
         
+    
+    
         
     def loadR(self):
         fc = lambda s: complex(s.replace('+-', '-'))
-        VB = readfile(self.filename)
-        for i in range (self.xs[0]):
-            self.CMat[i]=loadtxt(self.fdname.format(self.x[i]),converters={0:fc, 1:fc}, dtype=complex)
+        VB = readfile(self.filename, getheaders = True)
+        st = VB[2][5]
+        a = re.findall("[-+]?\d+[\.]?\d*[eE]?[-+]?\d*",st)
+        mb = int(a[0])
+        mv = int(a[1])
+        M = VB[0]
+        
+        if shape(M[1]) != mb:
+            l = int(shape(M[1])[0]/ mv)
+            x = np.arange(l*mv,shape(M[1])[0])            
+            M = np.delete(M,x, axis=1)            
+            M = np.reshape(M,(shape(M)[0], l, mv))
+            
+        
+            
+        if self.vb == 0:
+            x =  np.arange(self.n, mb*mb, mv)
+            self.V = M[0]
+            self.B = M[1]
+            
+        else:
+            x = np.arange(self.n*mv,(self.n+1)*mv)
+            self.V = M[1]
+            self.B = M[0]
+             
+        xs = shape(x)
+            
+        self.CMat = np.zeros((xs[0],self.nc,2), dtype=complex)  
+        
+        for i in range (xs[0]):
+            self.CMat[i]=loadtxt(self.fdname.format(x[i]),converters={0:fc, 1:fc}, dtype=complex)
+#            print('loading:' i*100/xs[0] '%')
+            
+            update_progress(i/xs[0])
 #            CBHP1-NoiseVDCB-V119-40db-I9-1M-BaseT_20170206-182343_d3_{:04.0f}.txt
 
 
@@ -57,10 +91,10 @@ class CplotB(object):
         self.Ip = I*1e9
         self.Ip[0:199] = -self.Ip[0:199]
         
-        self.Mat=(f,I,S)
+        self.Mat=(f, B, V, I, S)
         
         if self.s == 1:            
-            save('CMatN{:02.0f}'.format(self.n),Mat)
+            save('CMatN{:02.0f}'.format(self.n),self.Mat)
             
     def loadM(self):
         self.Mat=load(filename)
@@ -94,7 +128,7 @@ class CplotB(object):
     def Stat(self):
         """ compute the noise power spectrum"""
         
-        for i in range (x[0]): 
+        for i in range (shape(self.Mat[2])[0]): 
            
             X = np.delete(self.Mat[2][i],np.where(abs(f)<11000))
             fX = np.delete(self.Mat[0],np.where(abs(f)<11000))
@@ -122,22 +156,44 @@ class CplotB(object):
             
         MatN = (self.Mat[1], SX, M2n)
         return MatN
+ 
+
+
+
+def update_progress(progress):
+        barLength = 10 # Modify this to change the length of the progress bar
+        status = ""
+        if isinstance(progress, int):
+            progress = float(progress)
+        if not isinstance(progress, float):
+            progress = 0
+            status = "error: progress var must be float\r\n"
+        if progress < 0:
+            progress = 0
+            status = "Halt...\r\n"
+        if progress >= 1:
+            progress = 1
+            status = "Done...\r\n"
+        block = int(round(barLength*progress))
+        text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+        sys.stdout.write(text)
+        sys.stdout.flush()
+           
         
-        
-class CplotV(CplotB):        
-    def __init__(self, filename, n, mv, fi, fm, s):
-        """n numero du sweep
-        mv nombre de points en V 
-        s = 1 for save"""
-        self.filename = filename
-        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
-        self.n = n        
-        self.fi = fi
-        self.fm = fm
-        self.mv = mv
-        self.nc = 2**17
-        self.s = s     
-        self.x = np.arange(n*self.mv,(n+1)*self.mv)
-        self.xs = shape(self.x)
-        self.CMat = np.zeros((self.xs[0],self.nc,2), dtype=complex)
+#class CplotV(CplotB):        
+#    def __init__(self, filename, n, mv, fi, fm, s):
+#        """n numero du sweep
+#        mv nombre de points en V 
+#        s = 1 for save"""
+#        self.filename = filename
+#        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
+#        self.n = n        
+#        self.fi = fi
+#        self.fm = fm
+#        self.mv = mv
+#        self.nc = 2**17
+#        self.s = s     
+#        self.x = np.arange(n*self.mv,(n+1)*self.mv)
+#        self.xs = shape(self.x)
+#        self.CMat = np.zeros((self.xs[0],self.nc,2), dtype=complex)
 
