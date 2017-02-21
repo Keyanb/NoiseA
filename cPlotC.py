@@ -52,7 +52,7 @@ class Cplot(object):
         mv = int(a[1])
         M = VB[0]
         
-        if shape(M[1]) != mb:
+        if shape(M)[1] != mb:
             l = int(shape(M[1])[0]/ mv)
             x = np.arange(l*mv,shape(M[1])[0])            
             M = np.delete(M,x, axis=1)            
@@ -61,7 +61,7 @@ class Cplot(object):
         
             
         if self.vb == 0:
-            x =  np.arange(self.n, mb*mb, mv)
+            x =  np.arange(self.n, mb*mv, mv)
             self.V = M[0]
             self.B = M[1]
             
@@ -97,7 +97,7 @@ class Cplot(object):
             save('CMatN{:02.0f}'.format(self.n),self.Mat)
             
     def loadM(self):
-        self.Mat=load(filename)
+        self.Mat=load(self.filename)
         
     def plotM(self):
         fig = figure(figsize = [16,9])
