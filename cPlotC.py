@@ -23,6 +23,7 @@ class CplotV(object):
         s = 1 for save"""
     def __init__(self, filename, n,mv, fi, fm, s):
         self.filename = filename
+        self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
         self.fi = fi
         self.fm = fm
@@ -56,7 +57,7 @@ class CplotB(object):
     def loadR(self):
         fc = lambda s: complex(s.replace('+-', '-'))
         for i in range (self.xs[0]):
-            self.CMat[i]=loadtxt(self.filename.format(self.x[i]),converters={0:fc, 1:fc}, dtype=complex)
+            self.CMat[i]=loadtxt(self.fdname.format(self.x[i]),converters={0:fc, 1:fc}, dtype=complex)
 #            CBHP1-NoiseVDCB-V119-40db-I9-1M-BaseT_20170206-182343_d3_{:04.0f}.txt
 
 
