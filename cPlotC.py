@@ -62,13 +62,13 @@ class Cplot(object):
             
         if self.vb == 0:
             x =  np.arange(self.n, mb*mv, mv)
-            self.V = M[0]
-            self.B = M[1]
+            self.B = M[0]
+            self.V = M[1]
             
         else:
             x = np.arange(self.n*mv,(self.n+1)*mv)
-            self.V = M[1]
-            self.B = M[0]
+            self.B = M[1]
+            self.V = M[0]
              
         xs = shape(x)
             
@@ -91,10 +91,17 @@ class Cplot(object):
         self.Ip = I*1e9
         self.Ip[0:199] = -self.Ip[0:199]
         
-        self.Mat=(f, self.B, self.V, I, S)
+        self.Mat=(S)
+        self.MatP=(f, self.B, self.V, I)
         
-        if self.s == 1:            
-            save('CMatN{:02.0f}'.format(self.n),self.Mat)
+        if self.s == 1:  
+            if self.vb == 1:
+                save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.Mat)
+                save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.MatP)
+            else:      
+                save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
+                save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.MatP)
+                
             
     def loadM(self):
         self.Mat=load(self.filename)
