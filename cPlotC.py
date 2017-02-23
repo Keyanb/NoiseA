@@ -14,6 +14,7 @@ import re
 from scipy import constants as k
 import matplotlib.cm as cmaps
 import time
+import os
 import sys
 sys.path.append('c:/codes/pyHegel')
 from pyHegel.util import readfile
@@ -74,33 +75,36 @@ class Cplot(object):
             
         self.CMat = np.zeros((xs[0],self.nc,2), dtype=complex)  
         
-        for i in range (xs[0]):
-            self.CMat[i]=loadtxt(self.fdname.format(x[i]),converters={0:fc, 1:fc}, dtype=complex)
-#            print('loading:' i*100/xs[0] '%')
+        if self.vb == 1:
+            fna = self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n])
+            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[0,self.n])
+        else:
+            fna = self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.B[0,self.n])
+            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.B[0,self.n])
+        
+        if os.path.isfile(fna):
+            self.Mat = read(fna)
+            self.MatP = read(fnaP)
             
-            update_progress(i/xs[0])
-#            CBHP1-NoiseVDCB-V119-40db-I9-1M-BaseT_20170206-182343_d3_{:04.0f}.txt
+        else:        
+            for i in range (xs[0]):
+                self.CMat[i]=loadtxt(self.fdname.format(x[i]),converters={0:fc, 1:fc}, dtype=complex)
+                update_progress(i/xs[0])
 
-
-        f = real(self.CMat[0,:,0])
-        I = abs(sqrt(self.CMat[:,0,1])*1e-6/self.nc)
-        S = self.CMat[:,:,1]
-
-        self.fp = abs(f[0:self.fm])
-        self.Sp = log(S[:,0:self.fm])
-        self.Ip = I*1e9
-        self.Ip[0:199] = -self.Ip[0:199]
+            f = real(self.CMat[0,:,0])
+            I = abs(sqrt(self.CMat[:,0,1])*1e-6/self.nc)
+            S = self.CMat[:,:,1]
+               
+            self.Mat=(S)
+            self.MatP=(f, self.B, self.V, I)
         
-        self.Mat=(S)
-        self.MatP=(f, self.B, self.V, I)
-        
-        if self.s == 1:  
-            if self.vb == 1:
-                save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.Mat)
-                save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.MatP)
-            else:      
-                save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
-                save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.MatP)
+            if self.s == 1:  
+                if self.vb == 1:
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.Mat)
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[0,self.n]),self.MatP)
+                else:      
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]),self.MatP)
                 
             
     def loadM(self):
@@ -110,13 +114,18 @@ class Cplot(object):
         fig = figure(figsize = [16,9])
         ax1 = fig.add_subplot(1,1,1)
         plt.set_cmap(cmaps.viridis)
+        
+        fp = abs(self.MatP[0][0:self.fm])
+        Sp = log(self.Mat[:,0:self.fm])
+        Ip = self.MatP[3]*1e9
+        Ip[0:199] = -Ip[0:199]
 
         for item in ([ax1.title, ax1.xaxis.label, ax1.yaxis.label] +
             ax1.get_xticklabels() + ax1.get_yticklabels()):
             item.set_fontsize(20)
 
 #        CS1 = ax1.contourf(self.fp , self.Ip , self.Sp , self.l , vmin = -8.046, vmax = -2)
-        CS1 = ax1.pcolormesh(self.fp , self.Ip , self.Sp , vmin = -8.046, vmax = -2)
+        CS1 = ax1.pcolormesh(fp , self.V , Sp , vmin = -8.046, vmax = -2)
 
 
             #cbar=fig.colorbar(CS1, ax=ax1, shrink=0.9)
@@ -129,16 +138,19 @@ class Cplot(object):
         fig.savefig("CPNoiseN{:02.0f}.jpg".format(self.n))
         plt.clf()
         plt.close()
-        del CS1 , ax1 , self.fp , self.Ip , self.Sp , self.l
+        del CS1 , ax1 
         
         
     def Stat(self):
         """ compute the noise power spectrum"""
         
-        for i in range (shape(self.Mat[4])[0]): 
+        f = self.MatP[0]
+        fx = f
+        
+        for i in range (shape(self.Mat)[0]): 
            
-            X = np.delete(self.Mat[4][i],np.where(abs(f)<11000))
-            fX = np.delete(self.Mat[0],np.where(abs(f)<11000))
+            X = np.delete(self.Mat[i],np.where(abs(f)<11000))
+            fX = np.delete(fx,np.where(abs(f)<11000))
     
             X = np.delete(X,np.where(abs(fX)>62000))
             fX = np.delete(fX,np.where(abs(fX)>62000))
@@ -160,7 +172,8 @@ class Cplot(object):
 
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
-            
+        
+        plot(fc,X)
         MatN = (self.Mat[1], SX, M2n)
         return MatN
  
