@@ -60,31 +60,29 @@ class Cplot(object):
             M = np.reshape(M,(shape(M)[0], l, mv))
             
         
-            
+        self.B = M[0]
+        self.V = M[1]   
+       
         if self.vb == 0:
             x =  np.arange(self.n, mb*mv, mv)
-            self.B = M[0]
-            self.V = M[1]
-            
+                       
         else:
             x = np.arange(self.n*mv,(self.n+1)*mv)
-            self.B = M[1]
-            self.V = M[0]
              
         xs = shape(x)
             
         self.CMat = np.zeros((xs[0],self.nc,2), dtype=complex)  
         
         if self.vb == 1:
-            fna = self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n])
-            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[0,self.n])
+            fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[0,self.n])
+            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P.npy'.format(self.B[0,self.n])
         else:
-            fna = self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.B[0,self.n])
-            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.B[0,self.n])
+            fna = self.filename[:-4] + 'Bs_V={:02.3f}V.npy'.format(self.V[0,self.n])
+            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P.npy'.format(self.V[0,self.n])
         
         if os.path.isfile(fna):
-            self.Mat = read(fna)
-            self.MatP = read(fnaP)
+            self.Mat = load(fna)
+            self.MatP = load(fnaP)
             
         else:        
             for i in range (xs[0]):
@@ -106,9 +104,7 @@ class Cplot(object):
                     save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
                     save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]),self.MatP)
                 
-            
-    def loadM(self):
-        self.Mat=load(self.filename)
+            del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
         
     def plotM(self):
         fig = figure(figsize = [16,9])
@@ -125,20 +121,27 @@ class Cplot(object):
             item.set_fontsize(20)
 
 #        CS1 = ax1.contourf(self.fp , self.Ip , self.Sp , self.l , vmin = -8.046, vmax = -2)
-        CS1 = ax1.pcolormesh(fp , self.V , Sp , vmin = -8.046, vmax = -2)
-
+        if self.vb == 0:
+            CS1 = ax1.pcolormesh(fp , self.V[:,0] , Sp , vmin = -8.046, vmax = -2)
+        else:
+            CS1 = ax1.pcolormesh(fp , self.B[:,0] , Sp , vmin = -8.046, vmax = -2)
 
             #cbar=fig.colorbar(CS1, ax=ax1, shrink=0.9)
             #ax1.set_xlim(xmin = 4.173, xmax = 4.88)
         plt.xlabel ("$f(Hz)$")
-        plt.ylabel (r"$I_{bias}(nA)$")
+        
         #cbar.ax.set_ylabel ("$\sigma (e^2/h)$ ")
         plt.tight_layout()
 
-        fig.savefig("CPNoiseN{:02.0f}.jpg".format(self.n))
+        if self.vb == 0:
+            plt.ylabel (r"$B(T)$")
+            fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0,self.n]))
+        else:
+            plt.ylabel (r"$V_{bias}(V)$")
+            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[0,self.n]))
         plt.clf()
         plt.close()
-        del CS1 , ax1 
+        del CS1 , ax1, fp, Sp, Ip 
         
         
     def Stat(self):
@@ -146,6 +149,8 @@ class Cplot(object):
         
         f = self.MatP[0]
         fx = f
+        M2n = np.zeros(shape(self.Mat)[0])
+        SX = np.zeros(shape(self.Mat)[0])
         
         for i in range (shape(self.Mat)[0]): 
            
@@ -173,9 +178,15 @@ class Cplot(object):
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
         
-        plot(fc,X)
+        plot(fX,X)
         MatN = (self.Mat[1], SX, M2n)
+        if self.vb == 0:
+            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]))
+        else:
+            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]))
         return MatN
+        
+        del X, fX
  
 
 
