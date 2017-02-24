@@ -58,6 +58,7 @@ class Cplot(object):
             x = np.arange(l*mv,shape(M[1])[0])            
             M = np.delete(M,x, axis=1)            
             M = np.reshape(M,(shape(M)[0], l, mv))
+            M = swapaxes(M, 1, 2)
             
         
         self.B = M[0]
@@ -74,13 +75,14 @@ class Cplot(object):
         self.CMat = np.zeros((xs[0],self.nc,2), dtype=complex)  
         
         if self.vb == 1:
-            fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[0,self.n])
-            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P.npy'.format(self.B[0,self.n])
+            fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[self.n,0])
+            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P.npy'.format(self.B[self.n,0])
         else:
             fna = self.filename[:-4] + 'Bs_V={:02.3f}V.npy'.format(self.V[0,self.n])
             fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P.npy'.format(self.V[0,self.n])
         
         if os.path.isfile(fna):
+            print('T')
             self.Mat = load(fna)
             self.MatP = load(fnaP)
             
@@ -98,8 +100,8 @@ class Cplot(object):
         
             if self.s == 1:  
                 if self.vb == 1:
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[0,self.n]),self.Mat)
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[0,self.n]),self.MatP)
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[self.n,0]),self.Mat)
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[self.n,0]),self.MatP)
                 else:      
                     save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
                     save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]),self.MatP)
@@ -121,8 +123,8 @@ class Cplot(object):
             item.set_fontsize(20)
 
 #        CS1 = ax1.contourf(self.fp , self.Ip , self.Sp , self.l , vmin = -8.046, vmax = -2)
-        if self.vb == 0:
-            CS1 = ax1.pcolormesh(fp , self.V[:,0] , Sp , vmin = -8.046, vmax = -2)
+        if self.vb == 1:
+            CS1 = ax1.pcolormesh(fp , self.V[0,:] , Sp , vmin = -8.046, vmax = -2)
         else:
             CS1 = ax1.pcolormesh(fp , self.B[:,0] , Sp , vmin = -8.046, vmax = -2)
 
@@ -138,7 +140,7 @@ class Cplot(object):
             fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0,self.n]))
         else:
             plt.ylabel (r"$V_{bias}(V)$")
-            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[0,self.n]))
+            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[self.n,0]))
         plt.clf()
         plt.close()
         del CS1 , ax1, fp, Sp, Ip 
@@ -181,9 +183,9 @@ class Cplot(object):
         plot(fX,X)
         MatN = (self.Mat[1], SX, M2n)
         if self.vb == 0:
-            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]))
+            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), MatN)
         else:
-            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]))
+            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), MatN)
         return MatN
         
         del X, fX
