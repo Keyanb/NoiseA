@@ -24,7 +24,7 @@ from pyHegel.util import readfile
         
         
 class Cplot(object):
-    def __init__(self, filename, n, vb, fi, fm, s):
+    def __init__(self, filename, n, vb, N, fm, s):
         """n numero du sweep
         mb nombre de points en B
         mv nombre de points en V 
@@ -32,7 +32,7 @@ class Cplot(object):
         self.filename = filename
         self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
-        self.fi = fi
+        self.N = N
         self.fm = fm
         self.nc = 2**17
         self.s = s  
@@ -154,29 +154,25 @@ class Cplot(object):
         fx = f
         M2n = np.zeros(shape(self.Mat)[0])
         SX = np.zeros(shape(self.Mat)[0])
+        fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]])
+        fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
         
         for i in range (shape(self.Mat)[0]): 
-           
-            X = np.delete(self.Mat[i],np.where(abs(f)<11000))
-            fX = np.delete(fx,np.where(abs(f)<11000))
+            X = np.delete(self.Mat[i],np.where(abs(f) < fq[0,0]))
+            fX = np.delete(fx,np.where(abs(f) < fq[0,0]))
+            
+            X = np.delete(X,np.where(abs(fX) > fq[0,1]))
+            fX = np.delete(fX,np.where(abs(fX) > fq[0,1]))
+            
+            for j in range(shape(fq1)[0]-1):              
+               X = np.delete(X,np.where((abs(fX) > fq1[j,0]) & (abs(fX) < fq1[j,1])))
+               fX = np.delete(fX,np.where((abs(fX)> fq1[j,0]) & (abs(fX) < fq1[j,1])))
+               
+            if self.N == 2:
+                 for j in range(shape(fq2)[0]): 
+                     X = np.delete(X,np.where((abs(fX) > fq2[j,0]) & (abs(fX) < fq2[j,1])))
+                     fX = np.delete(fX,np.where((abs(fX)> fq2[j,0]) & (abs(fX) < fq2[j,1])))
     
-            X = np.delete(X,np.where(abs(fX)>62000))
-            fX = np.delete(fX,np.where(abs(fX)>62000))
-    
-            X = np.delete(X,np.where((abs(fX)>14300) & (abs(fX)<20600)))
-            fX = np.delete(fX,np.where((abs(fX)>14300) & (abs(fX)<20600)))
-    
-            X = np.delete(X,np.where((abs(fX)>20810) & (abs(fX)<20890)))
-            fX = np.delete(fX,np.where((abs(fX)>20810) & (abs(fX)<20890)))
-    
-            X = np.delete(X,np.where((abs(fX)>36700) & (abs(fX)<37300)))
-            fX = np.delete(fX,np.where((abs(fX)>36700) & (abs(fX)<37300)))
-    
-            X = np.delete(X,np.where((abs(fX)>39200) & (abs(fX)<40600)))
-            fX = np.delete(fX,np.where((abs(fX)>39200) & (abs(fX)<40600)))
-    
-            X = np.delete(X,np.where((abs(fX)>42200) & (abs(fX)<43500)))
-            fX = np.delete(fX,np.where((abs(fX)>42200) & (abs(fX)<43500)))
 
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
