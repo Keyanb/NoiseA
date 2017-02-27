@@ -58,11 +58,12 @@ class Cplot(object):
             x = np.arange(l*mv,shape(M[1])[0])            
             M = np.delete(M,x, axis=1)            
             M = np.reshape(M,(shape(M)[0], l, mv))
-            M = swapaxes(M, 1, 2)
-            
-        
-        self.B = M[0]
-        self.V = M[1]   
+            M = swapaxes(M, 1, 2)           
+            self.B = transpose(M[0])
+            self.V = transpose(M[1])   
+        else:
+            self.B = M[0]
+            self.V = M[1]
        
         if self.vb == 0:
             x =  np.arange(self.n, mb*mv, mv)
