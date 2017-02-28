@@ -10,6 +10,8 @@ from pylab import *
 from scipy import *
 from scipy.signal import *
 from numpy import *
+import scipy.integrate as integrate
+from scipy.optimize import *
 import re
 from scipy import constants as k
 import matplotlib.cm as cmaps
@@ -39,6 +41,10 @@ class Cplot(object):
         self.vb = vb
         self.V=0
         self.B=0
+        self.V0 = 0.0008/50 #true 0V
+        self.G = 1e-6 # amplifier gain
+        self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]])
+        self.fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
         
         
     
@@ -52,7 +58,7 @@ class Cplot(object):
         mb = int(a[0])
         mv = int(a[1])
         M = VB[0]
-        V0 = 0.0008
+       
         
         if shape(M)[1] != mb:
             l = int(shape(M[1])[0]/ mv)
@@ -66,7 +72,7 @@ class Cplot(object):
             self.B = M[0]
             self.V = M[1]
             
-        self.V = (self.V-V0)/50
+        self.V = (self.V)/50-self.V0
        
         if self.vb == 0:
             x =  np.arange(self.n, mb*mv, mv)
@@ -96,7 +102,7 @@ class Cplot(object):
                 update_progress(i/xs[0])
 
             f = real(self.CMat[0,:,0])
-            I = abs(sqrt(self.CMat[:,0,1])*1e-6/self.nc)
+            I = abs(sqrt(self.CMat[:,0,1])*self.G/self.nc)
             S = self.CMat[:,:,1]
                
             self.Mat=(S)
@@ -120,7 +126,7 @@ class Cplot(object):
         fp = abs(self.MatP[0][0:self.fm])
         Sp = log(self.Mat[:,0:self.fm])
         Ip = self.MatP[3]*1e9
-        Ip[0:199] = -Ip[0:199]
+        #Ip[0:199] = -Ip[0:199]
 
         for item in ([ax1.title, ax1.xaxis.label, ax1.yaxis.label] +
             ax1.get_xticklabels() + ax1.get_yticklabels()):
@@ -157,31 +163,30 @@ class Cplot(object):
         fx = f
         M2n = np.zeros(shape(self.Mat)[0])
         SX = np.zeros(shape(self.Mat)[0])
-        fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]])
-        fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
+        
         
         for i in range (shape(self.Mat)[0]): 
-            X = np.delete(self.Mat[i],np.where(abs(f) < fq1[0,0]))
-            fX = np.delete(fx,np.where(abs(f) < fq1[0,0]))
+            X = np.delete(self.Mat[i],np.where(abs(f) < self.fq1[0,0]))
+            fX = np.delete(fx,np.where(abs(f) < self.fq1[0,0]))
             
-            X = np.delete(X,np.where(abs(fX) > fq1[0,1]))
-            fX = np.delete(fX,np.where(abs(fX) > fq1[0,1]))
+            X = np.delete(X,np.where(abs(fX) > self.fq1[0,1]))
+            fX = np.delete(fX,np.where(abs(fX) > self.fq1[0,1]))
             
-            for j in range(shape(fq1)[0]-1):              
-               X = np.delete(X,np.where((abs(fX) > fq1[j,0]) & (abs(fX) < fq1[j,1])))
-               fX = np.delete(fX,np.where((abs(fX)> fq1[j,0]) & (abs(fX) < fq1[j,1])))
+            for j in range(1,shape(self.fq1)[0]):              
+               X = np.delete(X,np.where((abs(fX) > self.fq1[j,0]) & (abs(fX) < self.fq1[j,1])))
+               fX = np.delete(fX,np.where((abs(fX)> self.fq1[j,0]) & (abs(fX) < self.fq1[j,1])))
                
             if self.R == 2:
-                 for j in range(shape(fq2)[0]): 
-                     X = np.delete(X,np.where((abs(fX) > fq2[j,0]) & (abs(fX) < fq2[j,1])))
-                     fX = np.delete(fX,np.where((abs(fX)> fq2[j,0]) & (abs(fX) < fq2[j,1])))
+                 for j in range(shape(self.fq2)[0]): 
+                     X = np.delete(X,np.where((abs(fX) > self.fq2[j,0]) & (abs(fX) < self.fq2[j,1])))
+                     fX = np.delete(fX,np.where((abs(fX)> self.fq2[j,0]) & (abs(fX) < self.fq2[j,1])))
     
 
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
         
         plot(fX,X)
-        self.MStat = (self.Mat[1], SX, M2n)
+        self.MStat = (self.MatP[3], SX, M2n)
         if self.vb == 0:
             save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), self.MStat)
         else:
@@ -194,31 +199,34 @@ class Cplot(object):
     def psd(self):    
         
         C = 1.293e-9
-        B = self.B
-        V = self.V 
-        I = self.I
+        B = self.MatP[1][self.n]
+        V = self.MatP[2][self.n]
+        I = self.MatP[3]
         Si = (I/abs(V))
         R = 1/Si
+        NV = 9.8e-18
+        NI = 1.17e-25
+        
         if self.R == 2:
             Sig = (I/abs(V))*log(1000./960)*25812/(2*pi)
         else:
             Sig = (I/abs(V))*log(700./150)*25812/(2*pi)
         
-        s=shape(R)
+        s = shape(R)[0]
         
     # Calculating Sig, V, B for the V sweep at diff B
 
         def mn(vm):
-             RV[i] = (abs(VV[i]/50-vm))/IV[i]
-             return abs(sum(gradient(RV[i,v[i]-2:v[i]+2])))
+             RV = (abs(V/50-vm))/I
+             return abs(sum(gradient(RV[v-2:v+2])))
              
         if self.vb == 1:              
             RV = np.zeros((s))
             RDV = np.zeros((s-1))
-            vm = V0
+            vm = self.V0
             s2 = shape(B)[0]                         
             v = argmin(abs(V))             
-            r = minimize(mn,V0, method='nelder-mead',options={'xtol': 1e-12, 'disp': True})
+            r = minimize(mn,self.V0, method='nelder-mead',options={'xtol': 1e-12, 'disp': True})
             vp = r.x
             V = (V-vp)
             RV = (abs(V))/I
@@ -228,24 +236,22 @@ class Cplot(object):
             SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)),15,3)
           
         R2 = np.zeros((s,2))
-
-        f1 = 1.1e4
-        f2 = 6.2e4
-        M1n = self.MStat[1]
-        SX = self.MStat[2]
+        M2n = self.MStat[2]
+        SX = self.MStat[1]
        
-        for i in range(s[0]):
-            R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2,f1,f2) 
+        for i in range(s):
+            R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2,self.fq1[0,0],self.fq1[0,1]) 
  
-        ZN = 9.8e-18/(f2-f1)*R2[:,0]
-        C2 = M1n*1e-12/(2**17*SX*5e4)
-        C2C = C2-ZN-1.17e-25
-        NT = 4*k.k*296/R
-        return(C2C)
+        Df = self.fq1[0,1]-self.fq1[0,0] 
+        ZN = NV/(Df)*R2[:,0]
+        C2 = M2n*self.G**2/(self.nc*SX*Df)
+        C2C = C2-ZN-NI
+        NT = 4*k.k*3e-2/R
+        return(R, RV, RDV, R2, C2, C2C)
         
 
 def update_progress(progress):
-        barLength = 10 # Modify this to change the length of the progress bar
+        barLength = 10 
         status = ""
         if isinstance(progress, int):
             progress = float(progress)
