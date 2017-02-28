@@ -24,7 +24,7 @@ from pyHegel.util import readfile
         
         
 class Cplot(object):
-    def __init__(self, filename, n, vb, N, fm, s):
+    def __init__(self, filename, n, vb, R, fm, s):
         """n numero du sweep
         mb nombre de points en B
         mv nombre de points en V 
@@ -32,7 +32,7 @@ class Cplot(object):
         self.filename = filename
         self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
-        self.N = N
+        self.R = R
         self.fm = fm
         self.nc = 2**17
         self.s = s  
@@ -52,6 +52,7 @@ class Cplot(object):
         mb = int(a[0])
         mv = int(a[1])
         M = VB[0]
+        V0 = 0.0008
         
         if shape(M)[1] != mb:
             l = int(shape(M[1])[0]/ mv)
@@ -64,6 +65,8 @@ class Cplot(object):
         else:
             self.B = M[0]
             self.V = M[1]
+            
+        self.V = (self.V-V0)/50
        
         if self.vb == 0:
             x =  np.arange(self.n, mb*mv, mv)
@@ -158,17 +161,17 @@ class Cplot(object):
         fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
         
         for i in range (shape(self.Mat)[0]): 
-            X = np.delete(self.Mat[i],np.where(abs(f) < fq[0,0]))
-            fX = np.delete(fx,np.where(abs(f) < fq[0,0]))
+            X = np.delete(self.Mat[i],np.where(abs(f) < fq1[0,0]))
+            fX = np.delete(fx,np.where(abs(f) < fq1[0,0]))
             
-            X = np.delete(X,np.where(abs(fX) > fq[0,1]))
-            fX = np.delete(fX,np.where(abs(fX) > fq[0,1]))
+            X = np.delete(X,np.where(abs(fX) > fq1[0,1]))
+            fX = np.delete(fX,np.where(abs(fX) > fq1[0,1]))
             
             for j in range(shape(fq1)[0]-1):              
                X = np.delete(X,np.where((abs(fX) > fq1[j,0]) & (abs(fX) < fq1[j,1])))
                fX = np.delete(fX,np.where((abs(fX)> fq1[j,0]) & (abs(fX) < fq1[j,1])))
                
-            if self.N == 2:
+            if self.R == 2:
                  for j in range(shape(fq2)[0]): 
                      X = np.delete(X,np.where((abs(fX) > fq2[j,0]) & (abs(fX) < fq2[j,1])))
                      fX = np.delete(fX,np.where((abs(fX)> fq2[j,0]) & (abs(fX) < fq2[j,1])))
@@ -178,17 +181,68 @@ class Cplot(object):
             SX[i] = shape(X)[0]
         
         plot(fX,X)
-        MatN = (self.Mat[1], SX, M2n)
+        self.MStat = (self.Mat[1], SX, M2n)
         if self.vb == 0:
-            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), MatN)
+            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), self.MStat)
         else:
-            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), MatN)
-        return MatN
+            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), self.MStat)
+        return self.MStat
         
         del X, fX
+        
+        
+    def psd(self):    
+        
+        C = 1.293e-9
+        B = self.B
+        V = self.V 
+        I = self.I
+        Si = (I/abs(V))
+        R = 1/Si
+        if self.R == 2:
+            Sig = (I/abs(V))*log(1000./960)*25812/(2*pi)
+        else:
+            Sig = (I/abs(V))*log(700./150)*25812/(2*pi)
+        
+        s=shape(R)
+        
+    # Calculating Sig, V, B for the V sweep at diff B
+
+        def mn(vm):
+             RV[i] = (abs(VV[i]/50-vm))/IV[i]
+             return abs(sum(gradient(RV[i,v[i]-2:v[i]+2])))
+             
+        if self.vb == 1:              
+            RV = np.zeros((s))
+            RDV = np.zeros((s-1))
+            vm = V0
+            s2 = shape(B)[0]                         
+            v = argmin(abs(V))             
+            r = minimize(mn,V0, method='nelder-mead',options={'xtol': 1e-12, 'disp': True})
+            vp = r.x
+            V = (V-vp)
+            RV = (abs(V))/I
+            RDV = abs(np.diff(V))/np.diff(I)
+             
+            SigV = 1/RV*log(1000./960)*25812/(2*pi)
+            SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)),15,3)
+          
+        R2 = np.zeros((s,2))
+
+        f1 = 1.1e4
+        f2 = 6.2e4
+        M1n = self.MStat[1]
+        SX = self.MStat[2]
+       
+        for i in range(s[0]):
+            R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2,f1,f2) 
  
-
-
+        ZN = 9.8e-18/(f2-f1)*R2[:,0]
+        C2 = M1n*1e-12/(2**17*SX*5e4)
+        C2C = C2-ZN-1.17e-25
+        NT = 4*k.k*296/R
+        return(C2C)
+        
 
 def update_progress(progress):
         barLength = 10 # Modify this to change the length of the progress bar
