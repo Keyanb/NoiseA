@@ -23,7 +23,7 @@ from pyHegel.util import readfile
 
             
 class Cplot(object):
-    def __init__(self, filename, n, vb, R, fm, s):
+    def __init__(self, filename, n, vb, Ring, fm, s):
         """n numero du sweep
         mb nombre de points en B
         mv nombre de points en V 
@@ -31,7 +31,7 @@ class Cplot(object):
         self.filename = filename
         self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
-        self.R = R #which ring
+        self.Ring = Ring #which ring
         self.fm = fm
         self.nc = 2**17
         self.s = s
@@ -170,7 +170,7 @@ class Cplot(object):
                 X = np.delete(X, np.where((abs(fX) > self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
                 fX = np.delete(fX, np.where((abs(fX)> self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
                
-            if self.R == 2:
+            if self.Ring == 2:
                 for j in range(shape(self.fq2)[0]): 
                     X = np.delete(X, np.where((abs(fX) > self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
                     fX = np.delete(fX, np.where((abs(fX)> self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
@@ -201,7 +201,7 @@ class Cplot(object):
         NV = 9.8e-18
         NI = 1.17e-25
         
-        if self.R == 2:
+        if self.Ring == 2:
             Sig = Si*log(1000./960)*25812/(2*pi)
         else:
             Sig = Si*log(700./150)*25812/(2*pi)
@@ -226,7 +226,7 @@ class Cplot(object):
             R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
                     
-            if self.R == 2:
+            if self.Ring == 2:
                 SigV = 1/R*log(1000./960)*25812/(2*pi)
                 SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)), 15, 3)
             else:
@@ -254,11 +254,11 @@ class Cplot(object):
         if self.vb == 1:               
             self.MatC = (V, I, R, RDV, SigV, SigDV, C2, C2C)            
             if self.s > 1:
-                save('Stat' +'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + '_Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]), self.MatC)                    
+                save('Stat' +'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(N) + '_Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]), self.MatC)                    
         else:
             self.MatC = (B, I, R,  Sig, C2, C2C)
             if self.s > 1:
-                save('Stat' + 'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[self.n,0]), self.MatC)
+                save('Stat' + 'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[self.n,0]), self.MatC)
                 
         return(self.MatC)
 
@@ -284,7 +284,7 @@ class Cplot(object):
             
         else:
             ax1.plot(self.MatC[0], self.MatC[5], 'b', label = 'White Noise')
-            ax1b.plot(self.MatC[0], self.MatC[3],' g', label = r'$\sigma$')
+            ax1b.plot(self.MatC[0], self.MatC[3], 'g', label = r'$\sigma$')
             ax1.set_xlabel ("$B(T)$", fontsize = fs)
         
           
