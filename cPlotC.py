@@ -78,11 +78,11 @@ class Cplot(object):
         self.CMat = np.zeros((xs[0], self.nc, 2), dtype=complex)  
         
         if self.vb == 1:
-            fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[self.n,0])
-            fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P.npy'.format(self.B[self.n,0])
+            fna = self.filename[:-4] + 'Vs_B={:02.4f}T.npy'.format(self.B[self.n,0])
+            fnaP = self.filename[:-4] + 'Vs_B={:02.4f}T-P.npy'.format(self.B[self.n,0])
         else:
-            fna = self.filename[:-4] + 'Bs_V={:02.3f}V.npy'.format(self.V[self.n,0])
-            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P.npy'.format(self.V[self.n,0])
+            fna = self.filename[:-4] + 'Bs_V={:02.4f}V.npy'.format(self.V[self.n,0])
+            fnaP = self.filename[:-4] + 'Bs_V={:02.4f}V-P.npy'.format(self.V[self.n,0])
         
         if os.path.isfile(fna):
             print('T')
@@ -103,11 +103,11 @@ class Cplot(object):
         
             if self.s == 1:  
                 if self.vb == 1:
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[self.n,0]), self.Mat)
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[self.n,0]), self.MatP)
+                    save(self.filename[:-4] + 'Vs_B={:02.4f}T'.format(self.B[self.n,0]), self.Mat)
+                    save(self.filename[:-4] + 'Vs_B={:02.4f}T-P'.format(self.B[self.n,0]), self.MatP)
                 else:      
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[self.n,0]), self.Mat)
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[self.n,0]), self.MatP)
+                    save(self.filename[:-4] + 'Bs_V={:02.4f}V'.format(self.V[self.n,0]), self.Mat)
+                    save(self.filename[:-4] + 'Bs_V={:02.4f}V-P'.format(self.V[self.n,0]), self.MatP)
                 
             del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
 
@@ -140,11 +140,11 @@ class Cplot(object):
         if self.vb == 0:
             plt.ylabel (r"$B(T)$")
             plt.tight_layout()
-            fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0, self.n]))
+            fig.savefig("CPNoiseBs_V={:02.4f}V.jpg".format(self.V[0, self.n]))
         else:
             plt.ylabel (r"$V_{bias}(V)$")
             plt.tight_layout()
-            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
+            fig.savefig("CPNoiseVs_B={:02.4f}T.jpg".format(self.B[self.n, 0]))
         plt.clf()
         plt.close()
         del CS1 , ax1, fp, Sp, Ip 
