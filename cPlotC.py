@@ -34,7 +34,7 @@ class Cplot(object):
         self.filename = filename
         self.fdname = filename[:-4] + '_d3_{:04.0f}.txt'
         self.n = n        
-        self.R = R
+        self.R = R #which ring
         self.fm = fm
         self.nc = 2**17
         self.s = s  
@@ -43,7 +43,7 @@ class Cplot(object):
         self.B=0
         self.V0 = 0.0008/50 #true 0V
         self.G = 1e-6 # amplifier gain
-        self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]])
+        self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]]) #frequecy to filter fist number is the low and high frequency cutoff
         self.fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
         
         
@@ -187,10 +187,12 @@ class Cplot(object):
         
         plot(fX,X)
         self.MStat = (self.MatP[3], SX, M2n)
-        if self.vb == 0:
-            save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), self.MStat)
-        else:
-            save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), self.MStat)
+        
+        if self.s == 3:
+            if self.vb == 0:
+                save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), self.MStat)
+            else:
+                save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), self.MStat)
         return self.MStat
         
         del X, fX
@@ -217,7 +219,7 @@ class Cplot(object):
     # Calculating Sig, V, B for the V sweep at diff B
 
         def mn(vm):
-             RV = (abs(V/50-vm))/I
+             RV = (abs(V-vm))/I
              return abs(sum(gradient(RV[v-2:v+2])))
              
         if self.vb == 1:              
@@ -228,8 +230,8 @@ class Cplot(object):
             v = argmin(abs(V))             
             r = minimize(mn,self.V0, method='nelder-mead',options={'xtol': 1e-12, 'disp': True})
             vp = r.x
-            V = (V-vp)
-            RV = (abs(V))/I
+            V = (V+vp)
+            R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
              
             SigV = 1/RV*log(1000./960)*25812/(2*pi)
@@ -247,8 +249,17 @@ class Cplot(object):
         C2 = M2n*self.G**2/(self.nc*SX*Df)
         C2C = C2-ZN-NI
         NT = 4*k.k*3e-2/R
-        return(R, RV, RDV, R2, C2, C2C)
         
+        if self.vb == 1:               
+            self.MatC = (I, RV, RDV, SigV, SigDV, C2, C2C)            
+            if self.s > 1:
+                save('Stat' + self.filename[:-4] + 'Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]),self.MatC)                    
+        else:
+            self.MatC = (I, RV,  Sig, C2, C2C)
+            if self.s > 1:
+                save('Stat' + self.filename[:-4] + 'Bs_V={:02.3f}V-Stat'.format(self.V[0,self.n]),self.MatC)
+                
+        return(self.MatC)
 
 def update_progress(progress):
         barLength = 10 
