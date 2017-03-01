@@ -101,7 +101,7 @@ class Cplot(object):
             self.Mat = (S)
             self.MatP = (f, self.B, self.V, I)
         
-            if self.s == 1:  
+            if self.s > 1:  
                 if self.vb == 1:
                     save(self.filename[:-4] + 'Vs_B={:02.4f}T'.format(self.B[self.n,0]), self.Mat)
                     save(self.filename[:-4] + 'Vs_B={:02.4f}T-P'.format(self.B[self.n,0]), self.MatP)
@@ -202,9 +202,9 @@ class Cplot(object):
         NI = 1.17e-25
         
         if self.R == 2:
-            Sig = (I/abs(V))*log(1000./960)*25812/(2*pi)
+            Sig = Si*log(1000./960)*25812/(2*pi)
         else:
-            Sig = (I/abs(V))*log(700./150)*25812/(2*pi)
+            Sig = Si*log(700./150)*25812/(2*pi)
         
         s = shape(R)[0]
         
@@ -225,9 +225,13 @@ class Cplot(object):
             V = (V+vp)
             R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
-             
-            SigV = 1/R*log(1000./960)*25812/(2*pi)
-            SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)),15,3)
+                    
+            if self.R == 2:
+                SigV = 1/R*log(1000./960)*25812/(2*pi)
+                SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)), 15, 3)
+            else:
+                SigV = 1/R*log(700./150)*25812/(2*pi)
+                SigDV = savgol_filter(abs(1/RDV*log(700./150)*25812/(2*pi)), 15, 3)
           
         R2 = np.zeros((s, 2))
         M2n = self.MStat[2]
@@ -292,9 +296,9 @@ class Cplot(object):
         plt.tight_layout()
         
         if self.vb == 1:
-            fig.savefig("NSigVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
+            fig.savefig("NSigVs_B={:02.4f}T.jpg".format(self.B[self.n, 0]))
         else:
-            fig.savefig("NSigBs_V={:02.3f}V.jpg".format(self.V[self.n,0]))
+            fig.savefig("NSigBs_V={:02.4f}V.jpg".format(self.V[self.n,0]))
 
 
 def update_progress(progress):
