@@ -20,10 +20,7 @@ import os
 import sys
 sys.path.append('c:/codes/pyHegel')
 from pyHegel.util import readfile
-
-
-
-        
+       
         
 class Cplot(object):
     def __init__(self, filename, n, vb, R, fm, s):
@@ -45,10 +42,7 @@ class Cplot(object):
         self.G = 1e-6 # amplifier gain
         self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]]) #frequecy to filter fist number is the low and high frequency cutoff
         self.fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
-        
-        
-    
-    
+            
         
     def loadR(self):
         fc = lambda s: complex(s.replace('+-', '-'))
@@ -117,6 +111,8 @@ class Cplot(object):
                     save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]), self.MatP)
                 
             del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
+
+
         
     def plotM(self):
         fig = figure(figsize = [16,9])
@@ -140,16 +136,15 @@ class Cplot(object):
 
             #cbar=fig.colorbar(CS1, ax=ax1, shrink=0.9)
             #ax1.set_xlim(xmin = 4.173, xmax = 4.88)
-        plt.xlabel ("$f(Hz)$")
-        
+        plt.xlabel ("$f(Hz)$")        
         #cbar.ax.set_ylabel ("$\sigma (e^2/h)$ ")
-        plt.tight_layout()
-
         if self.vb == 0:
             plt.ylabel (r"$B(T)$")
+            plt.tight_layout()
             fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0, self.n]))
         else:
             plt.ylabel (r"$V_{bias}(V)$")
+            plt.tight_layout()
             fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
         plt.clf()
         plt.close()
@@ -181,7 +176,6 @@ class Cplot(object):
                      X = np.delete(X, np.where((abs(fX) > self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
                      fX = np.delete(fX, np.where((abs(fX)> self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
     
-
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
         
@@ -193,8 +187,7 @@ class Cplot(object):
                 save("StatBs_V={:02.3f}V".format(self.V[0, self.n]), self.MStat)
             else:
                 save("StatVs_B={:02.3f}T".format(self.B[0, self.n]), self.MStat)
-        return self.MStat
-        
+        return self.MStat        
         del X, fX
         
         
@@ -234,7 +227,7 @@ class Cplot(object):
             R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
              
-            SigV = 1/RV*log(1000./960)*25812/(2*pi)
+            SigV = 1/R*log(1000./960)*25812/(2*pi)
             SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)),15,3)
           
         R2 = np.zeros((s, 2))
@@ -250,16 +243,60 @@ class Cplot(object):
         C2C = C2-ZN-NI
         NT = 4*k.k*3e-2/R
         
+        if self.B[0,0] > 4.5:
+            N = 1
+        else: 
+            N = 2
+        
         if self.vb == 1:               
-            self.MatC = (I, RV, RDV, SigV, SigDV, C2, C2C)            
+            self.MatC = (V, I, R, RDV, SigV, SigDV, C2, C2C)            
             if self.s > 1:
-                save('Stat' + self.filename[:-4] + 'Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]),self.MatC)                    
+                save('Stat' +'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + '_Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]), self.MatC)                    
         else:
-            self.MatC = (I, RV,  Sig, C2, C2C)
+            self.MatC = (B, I, R,  Sig, C2, C2C)
             if self.s > 1:
-                save('Stat' + self.filename[:-4] + 'Bs_V={:02.3f}V-Stat'.format(self.V[0,self.n]),self.MatC)
+                save('Stat' + 'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[0,self.n]), self.MatC)
                 
         return(self.MatC)
+
+
+        
+    def PlotNoise(self):
+        fig = figure(figsize = [16,9])
+        ax1 = fig.add_subplot(1, 1, 1)
+        ax1b = ax1.twinx()
+        
+        plt.set_cmap(cmaps.viridis)
+        #fig.tight_layout()
+        fs=20
+        
+        for item in ([ax1.title, ax1.xaxis.label, ax1.yaxis.label, ax1b.yaxis.label] +
+            ax1.get_xticklabels() + ax1.get_yticklabels() + ax1b.get_yticklabels()):
+            item.set_fontsize(fs)
+        
+        if self.vb == 1:      
+            ax1.plot(self.MatC[0]*1e3, self.MatC[7], 'b', label = 'White Noise')
+            ax1b.plot(self.MatC[0]*1e3, self.MatC[4],'g', label = r'$\sigma$')
+            ax1.set_xlabel ("$V(mV)$",fontsize=fs)
+            
+        else:
+            ax1.plot(self.MatC[0], self.MatC[5], 'b', label = 'White Noise')
+            ax1b.plot(self.MatC[0], self.MatC[3],' g', label = r'$\sigma$')
+            ax1.set_xlabel ("$B(T)$", fontsize = fs)
+        
+          
+            
+        ax1.set_ylabel ("$\delta I^2(A^2/Hz)$ ",fontsize=fs)
+        ax1b.set_ylabel (r"$\sigma(e^2/h)$ ",rotation=270, labelpad=20,fontsize=fs)
+        st, en = ax1b.get_ylim()
+        ax1b.yaxis.set_ticks(np.arange(st, en, 0.01))
+        plt.tight_layout()
+        
+        if self.vb == 1:
+            fig.savefig("NSigVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
+        else:
+            fig.savefig("NSigBs_V={:02.3f}V.jpg".format(self.V[0, self.n]))
+
 
 def update_progress(progress):
         barLength = 10 
