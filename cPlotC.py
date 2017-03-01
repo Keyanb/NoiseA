@@ -98,29 +98,29 @@ class Cplot(object):
             
         else:        
             for i in range (xs[0]):
-                self.CMat[i]=loadtxt(self.fdname.format(x[i]),converters={0:fc, 1:fc}, dtype=complex)
+                self.CMat[i] = loadtxt(self.fdname.format(x[i]), converters={0:fc, 1:fc}, dtype=complex)
                 update_progress(i/xs[0])
 
             f = real(self.CMat[0,:,0])
             I = abs(sqrt(self.CMat[:,0,1])*self.G/self.nc)
             S = self.CMat[:,:,1]
                
-            self.Mat=(S)
-            self.MatP=(f, self.B, self.V, I)
+            self.Mat = (S)
+            self.MatP = (f, self.B, self.V, I)
         
             if self.s == 1:  
                 if self.vb == 1:
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[self.n,0]),self.Mat)
-                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[self.n,0]),self.MatP)
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[self.n,0]), self.Mat)
+                    save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[self.n,0]), self.MatP)
                 else:      
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]),self.Mat)
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]),self.MatP)
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]), self.Mat)
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]), self.MatP)
                 
             del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
         
     def plotM(self):
         fig = figure(figsize = [16,9])
-        ax1 = fig.add_subplot(1,1,1)
+        ax1 = fig.add_subplot(1, 1, 1)
         plt.set_cmap(cmaps.viridis)
         
         fp = abs(self.MatP[0][0:self.fm])
@@ -147,10 +147,10 @@ class Cplot(object):
 
         if self.vb == 0:
             plt.ylabel (r"$B(T)$")
-            fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0,self.n]))
+            fig.savefig("CPNoiseBs_V={:02.3f}V.jpg".format(self.V[0, self.n]))
         else:
             plt.ylabel (r"$V_{bias}(V)$")
-            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[self.n,0]))
+            fig.savefig("CPNoiseVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
         plt.clf()
         plt.close()
         del CS1 , ax1, fp, Sp, Ip 
@@ -166,20 +166,20 @@ class Cplot(object):
         
         
         for i in range (shape(self.Mat)[0]): 
-            X = np.delete(self.Mat[i],np.where(abs(f) < self.fq1[0,0]))
-            fX = np.delete(fx,np.where(abs(f) < self.fq1[0,0]))
+            X = np.delete(self.Mat[i], np.where(abs(f) < self.fq1[0, 0]))
+            fX = np.delete(fx, np.where(abs(f) < self.fq1[0, 0]))
             
-            X = np.delete(X,np.where(abs(fX) > self.fq1[0,1]))
-            fX = np.delete(fX,np.where(abs(fX) > self.fq1[0,1]))
+            X = np.delete(X, np.where(abs(fX) > self.fq1[0, 1]))
+            fX = np.delete(fX, np.where(abs(fX) > self.fq1[0, 1]))
             
-            for j in range(1,shape(self.fq1)[0]):              
-               X = np.delete(X,np.where((abs(fX) > self.fq1[j,0]) & (abs(fX) < self.fq1[j,1])))
-               fX = np.delete(fX,np.where((abs(fX)> self.fq1[j,0]) & (abs(fX) < self.fq1[j,1])))
+            for j in range(1, shape(self.fq1)[0]):              
+               X = np.delete(X, np.where((abs(fX) > self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
+               fX = np.delete(fX, np.where((abs(fX)> self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
                
             if self.R == 2:
                  for j in range(shape(self.fq2)[0]): 
-                     X = np.delete(X,np.where((abs(fX) > self.fq2[j,0]) & (abs(fX) < self.fq2[j,1])))
-                     fX = np.delete(fX,np.where((abs(fX)> self.fq2[j,0]) & (abs(fX) < self.fq2[j,1])))
+                     X = np.delete(X, np.where((abs(fX) > self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
+                     fX = np.delete(fX, np.where((abs(fX)> self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
     
 
             M2n[i] = np.sum(abs(X))
@@ -190,9 +190,9 @@ class Cplot(object):
         
         if self.s == 3:
             if self.vb == 0:
-                save("StatBs_V={:02.3f}V".format(self.V[0,self.n]), self.MStat)
+                save("StatBs_V={:02.3f}V".format(self.V[0, self.n]), self.MStat)
             else:
-                save("StatVs_B={:02.3f}T".format(self.B[0,self.n]), self.MStat)
+                save("StatVs_B={:02.3f}T".format(self.B[0, self.n]), self.MStat)
         return self.MStat
         
         del X, fX
@@ -228,7 +228,7 @@ class Cplot(object):
             vm = self.V0
             s2 = shape(B)[0]                         
             v = argmin(abs(V))             
-            r = minimize(mn,self.V0, method='nelder-mead',options={'xtol': 1e-12, 'disp': True})
+            r = minimize(mn,self.V0, method='nelder-mead', options={'xtol': 1e-12, 'disp': True})
             vp = r.x
             V = (V+vp)
             R = (abs(V))/I
@@ -237,12 +237,12 @@ class Cplot(object):
             SigV = 1/RV*log(1000./960)*25812/(2*pi)
             SigDV = savgol_filter(abs(1/RDV*log(1000./960)*25812/(2*pi)),15,3)
           
-        R2 = np.zeros((s,2))
+        R2 = np.zeros((s, 2))
         M2n = self.MStat[2]
         SX = self.MStat[1]
        
         for i in range(s):
-            R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2,self.fq1[0,0],self.fq1[0,1]) 
+            R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2, self.fq1[0, 0], self.fq1[0, 1]) 
  
         Df = self.fq1[0,1]-self.fq1[0,0] 
         ZN = NV/(Df)*R2[:,0]
