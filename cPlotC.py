@@ -64,8 +64,8 @@ class Cplot(object):
             self.B = transpose(M[0])
             self.V = transpose(M[1])   
         else:
-            self.B = M[0]
-            self.V = M[1]
+            self.B = transpose(M[0])
+            self.V = transpose(M[1])
             
         self.V = (self.V)/50-self.V0
        
@@ -81,8 +81,8 @@ class Cplot(object):
             fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[self.n,0])
             fnaP = self.filename[:-4] + 'Vs_B={:02.3f}T-P.npy'.format(self.B[self.n,0])
         else:
-            fna = self.filename[:-4] + 'Bs_V={:02.3f}V.npy'.format(self.V[0,self.n])
-            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P.npy'.format(self.V[0,self.n])
+            fna = self.filename[:-4] + 'Bs_V={:02.3f}V.npy'.format(self.V[self.n,0])
+            fnaP = self.filename[:-4] + 'Bs_V={:02.3f}V-P.npy'.format(self.V[self.n,0])
         
         if os.path.isfile(fna):
             print('T')
@@ -106,8 +106,8 @@ class Cplot(object):
                     save(self.filename[:-4] + 'Vs_B={:02.3f}T'.format(self.B[self.n,0]), self.Mat)
                     save(self.filename[:-4] + 'Vs_B={:02.3f}T-P'.format(self.B[self.n,0]), self.MatP)
                 else:      
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[0,self.n]), self.Mat)
-                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[0,self.n]), self.MatP)
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V'.format(self.V[self.n,0]), self.Mat)
+                    save(self.filename[:-4] + 'Bs_V={:02.3f}V-P'.format(self.V[self.n,0]), self.MatP)
                 
             del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
 
@@ -129,9 +129,9 @@ class Cplot(object):
 
 #        CS1 = ax1.contourf(self.fp , self.Ip , self.Sp , self.l , vmin = -8.046, vmax = -2)
         if self.vb == 1:
-            CS1 = ax1.pcolormesh(fp , self.V[0,:] , Sp , vmin = -8.046, vmax = -2)
+            CS1 = ax1.pcolormesh(fp , self.V[self.n] , Sp , vmin = -8.046, vmax = -2)
         else:
-            CS1 = ax1.pcolormesh(fp , self.B[:,0] , Sp , vmin = -8.046, vmax = -2)
+            CS1 = ax1.pcolormesh(fp , self.B[self.n] , Sp , vmin = -8.046, vmax = -2)
 
             #cbar=fig.colorbar(CS1, ax=ax1, shrink=0.9)
             #ax1.set_xlim(xmin = 4.173, xmax = 4.88)
@@ -183,9 +183,9 @@ class Cplot(object):
         
         if self.s == 3:
             if self.vb == 0:
-                save("StatBs_V={:02.3f}V".format(self.V[0, self.n]), self.MStat)
+                save("StatBs_V={:02.4f}V".format(self.V[0, self.n]), self.MStat)
             else:
-                save("StatVs_B={:02.3f}T".format(self.B[0, self.n]), self.MStat)
+                save("StatVs_B={:02.4f}T".format(self.B[0, self.n]), self.MStat)
         return self.MStat        
         del X, fX
         
@@ -253,7 +253,7 @@ class Cplot(object):
         else:
             self.MatC = (B, I, R,  Sig, C2, C2C)
             if self.s > 1:
-                save('Stat' + 'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[0,self.n]), self.MatC)
+                save('Stat' + 'R{:01.0f}'.format(self.R)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[self.n,0]), self.MatC)
                 
         return(self.MatC)
 
@@ -293,7 +293,7 @@ class Cplot(object):
         if self.vb == 1:
             fig.savefig("NSigVs_B={:02.3f}T.jpg".format(self.B[self.n, 0]))
         else:
-            fig.savefig("NSigBs_V={:02.3f}V.jpg".format(self.V[0, self.n]))
+            fig.savefig("NSigBs_V={:02.3f}V.jpg".format(self.V[self.n,0]))
 
 
 def update_progress(progress):
