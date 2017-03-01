@@ -217,8 +217,7 @@ class Cplot(object):
         if self.vb == 1:              
             RV = np.zeros((s))
             RDV = np.zeros((s-1))
-            vm = self.V0
-            s2 = shape(B)[0]                         
+            vm = self.V0                                    
             v = argmin(abs(V))             
             r = minimize(mn,self.V0, method='nelder-mead', options={'xtol': 1e-12, 'disp': True})
             vp = r.x
