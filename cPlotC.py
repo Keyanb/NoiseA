@@ -19,9 +19,9 @@ import time
 import os
 import sys
 sys.path.append('c:/codes/pyHegel')
-from pyHegel.util import readfile
-       
-        
+from pyHegel.util import readfile   
+
+            
 class Cplot(object):
     def __init__(self, filename, n, vb, R, fm, s):
         """n numero du sweep
@@ -34,13 +34,14 @@ class Cplot(object):
         self.R = R #which ring
         self.fm = fm
         self.nc = 2**17
-        self.s = s  
+        self.s = s
         self.vb = vb
-        self.V=0
-        self.B=0
+        self.V = 0
+        self.B = 0
         self.V0 = 0.0008/50 #true 0V
         self.G = 1e-6 # amplifier gain
-        self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]]) #frequecy to filter fist number is the low and high frequency cutoff
+        self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]]) 
+        #frequecy to filter fist number is the low and high frequency cutoff
         self.fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
             
         
@@ -56,9 +57,9 @@ class Cplot(object):
         
         if shape(M)[1] != mb:
             l = int(shape(M[1])[0]/ mv)
-            x = np.arange(l*mv,shape(M[1])[0])            
-            M = np.delete(M,x, axis=1)            
-            M = np.reshape(M,(shape(M)[0], l, mv))
+            x = np.arange(l*mv, shape(M[1])[0])            
+            M = np.delete(M, x, axis=1)            
+            M = np.reshape(M, (shape(M)[0], l, mv))
             M = swapaxes(M, 1, 2)           
             self.B = transpose(M[0])
             self.V = transpose(M[1])   
@@ -68,15 +69,13 @@ class Cplot(object):
             
         self.V = (self.V)/50-self.V0
        
-        if self.vb == 0:
-            x =  np.arange(self.n, mb*mv, mv)
-                       
-        else:
-            x = np.arange(self.n*mv,(self.n+1)*mv)
-             
+        if self.vb == 0: 
+            x =  np.arange(self.n, mb*mv, mv)                       
+        else: 
+            x = np.arange(self.n*mv,(self.n+1)*mv)             
         xs = shape(x)
             
-        self.CMat = np.zeros((xs[0],self.nc,2), dtype=complex)  
+        self.CMat = np.zeros((xs[0], self.nc, 2), dtype=complex)  
         
         if self.vb == 1:
             fna = self.filename[:-4] + 'Vs_B={:02.3f}T.npy'.format(self.B[self.n,0])
@@ -168,13 +167,13 @@ class Cplot(object):
             fX = np.delete(fX, np.where(abs(fX) > self.fq1[0, 1]))
             
             for j in range(1, shape(self.fq1)[0]):              
-               X = np.delete(X, np.where((abs(fX) > self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
-               fX = np.delete(fX, np.where((abs(fX)> self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
+                X = np.delete(X, np.where((abs(fX) > self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
+                fX = np.delete(fX, np.where((abs(fX)> self.fq1[j, 0]) & (abs(fX) < self.fq1[j, 1])))
                
             if self.R == 2:
-                 for j in range(shape(self.fq2)[0]): 
-                     X = np.delete(X, np.where((abs(fX) > self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
-                     fX = np.delete(fX, np.where((abs(fX)> self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
+                for j in range(shape(self.fq2)[0]): 
+                    X = np.delete(X, np.where((abs(fX) > self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
+                    fX = np.delete(fX, np.where((abs(fX)> self.fq2[j, 0]) & (abs(fX) < self.fq2[j, 1])))
     
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
@@ -212,8 +211,8 @@ class Cplot(object):
     # Calculating Sig, V, B for the V sweep at diff B
 
         def mn(vm):
-             RV = (abs(V-vm))/I
-             return abs(sum(gradient(RV[v-2:v+2])))
+            RV = (abs(V-vm))/I
+            return abs(sum(gradient(RV[v-2:v+2])))
              
         if self.vb == 1:              
             RV = np.zeros((s))
@@ -299,23 +298,23 @@ class Cplot(object):
 
 
 def update_progress(progress):
-        barLength = 10 
-        status = ""
-        if isinstance(progress, int):
-            progress = float(progress)
-        if not isinstance(progress, float):
-            progress = 0
-            status = "error: progress var must be float\r\n"
-        if progress < 0:
-            progress = 0
-            status = "Halt...\r\n"
-        if progress >= 1:
-            progress = 1
-            status = "Done...\r\n"
-        block = int(round(barLength*progress))
-        text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
-        sys.stdout.write(text)
-        sys.stdout.flush()
+    barLength = 10 
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
            
         
 #class CplotV(CplotB):        
