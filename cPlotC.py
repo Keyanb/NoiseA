@@ -81,8 +81,8 @@ class Cplot(object):
             fna = self.filename[:-4] + 'Vs_B={:02.4f}T.npy'.format(self.B[self.n,0])
             fnaP = self.filename[:-4] + 'Vs_B={:02.4f}T-P.npy'.format(self.B[self.n,0])
         else:
-            fna = self.filename[:-4] + 'Bs_V={:02.4f}V.npy'.format(self.V[self.n,0])
-            fnaP = self.filename[:-4] + 'Bs_V={:02.4f}V-P.npy'.format(self.V[self.n,0])
+            fna = self.filename[:-4] + 'Bs_V={:03.3f}muV.npy'.format(self.V[self.n,0]*1e6)
+            fnaP = self.filename[:-4] + 'Bs_V={:03.3f}muV-P.npy'.format(self.V[self.n,0]*1e6)
         
         if os.path.isfile(fna):
             print('T')
@@ -106,8 +106,8 @@ class Cplot(object):
                     save(self.filename[:-4] + 'Vs_B={:02.4f}T'.format(self.B[self.n,0]), self.Mat)
                     save(self.filename[:-4] + 'Vs_B={:02.4f}T-P'.format(self.B[self.n,0]), self.MatP)
                 else:      
-                    save(self.filename[:-4] + 'Bs_V={:02.4f}V'.format(self.V[self.n,0]), self.Mat)
-                    save(self.filename[:-4] + 'Bs_V={:02.4f}V-P'.format(self.V[self.n,0]), self.MatP)
+                    save(self.filename[:-4] + 'Bs_V={:03.3f}muV'.format(self.V[self.n,0]*1e6), self.Mat)
+                    save(self.filename[:-4] + 'Bs_V={:03.3f}muV-P'.format(self.V[self.n,0]*1e6), self.MatP)
                 
             del f, I, S, x, xs, VB, M, fc, mb, mv, a, st
 
@@ -140,7 +140,7 @@ class Cplot(object):
         if self.vb == 0:
             plt.ylabel (r"$B(T)$")
             plt.tight_layout()
-            fig.savefig("CPNoiseBs_V={:02.4f}V.jpg".format(self.V[0, self.n]))
+            fig.savefig("CPNoiseBs_V={:03.3f}muV.jpg".format(self.V[self.n,0]*1e6))
         else:
             plt.ylabel (r"$V_{bias}(V)$")
             plt.tight_layout()
@@ -178,14 +178,14 @@ class Cplot(object):
             M2n[i] = np.sum(abs(X))
             SX[i] = shape(X)[0]
         
-        plot(fX,X)
+#        plot(fX,X)
         self.MStat = (self.MatP[3], SX, M2n)
         
         if self.s == 3:
             if self.vb == 0:
-                save("StatBs_V={:02.4f}V".format(self.V[0, self.n]), self.MStat)
+                save("StatBs_V={:03.3f}muV".format(self.V[self.n,0]*1e6), self.MStat)
             else:
-                save("StatVs_B={:02.4f}T".format(self.B[0, self.n]), self.MStat)
+                save("StatVs_B={:02.4f}T".format(self.B[self.n,0]), self.MStat)
         return self.MStat        
         del X, fX
         
@@ -222,7 +222,7 @@ class Cplot(object):
             v = argmin(abs(V))             
             r = minimize(mn,self.V0, method='nelder-mead', options={'xtol': 1e-12, 'disp': True})
             vp = r.x
-            V = (V+vp)
+            V = (V-vp)
             R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
                     
@@ -247,18 +247,18 @@ class Cplot(object):
         NT = 4*k.k*3e-2/R
         
         if self.B[0,0] > 4.5:
-            N = 1
+            self.N = 1
         else: 
-            N = 2
+            self.N = 2
         
         if self.vb == 1:               
             self.MatC = (V, I, R, RDV, SigV, SigDV, C2, C2C)            
             if self.s > 1:
-                save('Stat' +'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(N) + '_Vs_B={:02.3f}T-Stat'.format(self.B[self.n,0]), self.MatC)                    
+                save('Stat' +'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(self.N) + '_Vs_B={:02.4f}T-Stat'.format(self.B[self.n,0]), self.MatC)                    
         else:
             self.MatC = (B, I, R,  Sig, C2, C2C)
             if self.s > 1:
-                save('Stat' + 'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(N) + 'Bs_V={:02.3f}V-Stat'.format(self.V[self.n,0]), self.MatC)
+                save('Stat' + 'R{:01.0f}'.format(self.Ring)+ 'N{:01.0f}'.format(self.N) + 'Bs_V={:03.3f}muV-Stat'.format(self.V[self.n,0]*1e6), self.MatC)
                 
         return(self.MatC)
 
@@ -296,9 +296,9 @@ class Cplot(object):
         plt.tight_layout()
         
         if self.vb == 1:
-            fig.savefig("NSigVs_B={:02.4f}T.jpg".format(self.B[self.n, 0]))
+            fig.savefig("R{:01.0f}".format(self.Ring)+ "N{:01.0f}".format(self.N) +"_Vs_B={:02.4f}T.jpg".format(self.B[self.n, 0]))
         else:
-            fig.savefig("NSigBs_V={:02.4f}V.jpg".format(self.V[self.n,0]))
+            fig.savefig("R{:01.0f}".format(self.Ring)+ "N{:01.0f}".format(self.N) +"_Bs_V={:03.3f}muV.jpg".format(self.V[self.n,0]*1e6))
 
 
 def update_progress(progress):
