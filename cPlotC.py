@@ -42,7 +42,7 @@ class Cplot(object):
         self.G = 1e-6 # amplifier gain
         self.fq1 = array([[10000, 55000], [18277, 18810], [19720, 20450], [39251, 40744], [42470, 43378]]) 
         #frequecy to filter fist number is the low and high frequency cutoff
-        self.fq2 = array([[12210, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
+        self.fq2 = array([[10001, 12382], [14830, 15186], [15291, 15730], [15970, 16427], [36725, 37080]])
             
         
     def loadR(self):
@@ -64,8 +64,12 @@ class Cplot(object):
             self.B = transpose(M[0])
             self.V = transpose(M[1])   
         else:
-            self.B = transpose(M[0])
-            self.V = transpose(M[1])
+            if self. vb == 0:
+                self.B = transpose(M[0])
+                self.V = transpose(M[1])
+            else:
+               self.B = M[0]
+               self.V = M[1]
             
         self.V = (self.V)/50-self.V0
        
@@ -212,7 +216,7 @@ class Cplot(object):
 
         def mn(vm):
             RV = (abs(V-vm))/I
-            return abs(sum(gradient(RV[v-2:v+2])))
+            return abs(sum(gradient(RV[v-25:v+25])))
              
         if self.vb == 1:              
             RV = np.zeros((s))
@@ -221,7 +225,7 @@ class Cplot(object):
             v = argmin(abs(V))             
             r = minimize(mn,self.V0, method='nelder-mead', options={'xtol': 1e-12, 'disp': True})
             vp = r.x
-            V = (V-vp)
+            V = (V+abs(vp))
             R = (abs(V))/I
             RDV = abs(np.diff(V))/np.diff(I)
                     
@@ -235,7 +239,7 @@ class Cplot(object):
         R2 = np.zeros((s, 2))
         M2n = self.MStat[2]
         SX = self.MStat[1]
-       
+     
         for i in range(s):
             R2[i]=integrate.quad(lambda x: 1/(R[i]/sqrt(1+R[i]**2*C**2*4*pi**2*x**2)+400)**2, self.fq1[0, 0], self.fq1[0, 1]) 
  
